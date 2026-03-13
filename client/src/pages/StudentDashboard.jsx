@@ -12,23 +12,15 @@ export default function StudentDashboard() {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const [drillsRes, subsRes] = await Promise.all([
-                    api.get('/drills'),
-                    api.get('/quizzes/my/submissions')
-                ]);
-
-                const allDrills = drillsRes.data;
-                const upcoming = allDrills.filter(d => d.status === 'upcoming');
-                setRecentDrills(upcoming.slice(0, 3));
-
-                const subs = subsRes.data;
-                const avgScore = subs.length > 0 ? subs.reduce((acc, curr) => acc + curr.percentage, 0) / subs.length : 0;
+                const res = await api.get('/dashboard/student');
+                const { stats: dashboardStats, upcomingDrills } = res.data;
 
                 setStats({
-                    upcomingDrills: upcoming.length,
-                    completedQuizzes: subs.length,
-                    avgScore: Math.round(avgScore)
+                    upcomingDrills: dashboardStats.upcomingDrillsCount,
+                    completedQuizzes: dashboardStats.completedQuizzes,
+                    avgScore: dashboardStats.averageScore
                 });
+                setRecentDrills(upcomingDrills.slice(0, 3));
             } catch (err) {
                 console.error('Failed to load dashboard', err);
             } finally {

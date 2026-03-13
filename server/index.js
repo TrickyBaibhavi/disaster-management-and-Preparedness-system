@@ -18,15 +18,28 @@ app.use('/api/drills', require('./routes/drills'));
 app.use('/api/quizzes', require('./routes/quizzes'));
 app.use('/api/emergency', require('./routes/emergency'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/dashboard', require('./routes/dashboard'));
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'OK', message: 'Disaster Prep API Running' }));
 
 // MongoDB Connection
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/disaster-platform';
+const seedDatabase = require('./seed/seedDatabase');
+
 mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
+  .connect(MONGO_URI)
+  .then(async () => {
     console.log('✅ MongoDB connected');
+    
+    // Auto-seed if database is empty (only in development)
+    if (process.env.NODE_ENV !== 'production') {
+        const Disaster = require('./models/Disaster');
+        if (await Disaster.countDocuments() === 0) {
+            await seedDatabase();
+        }
+    }
+
     app.listen(process.env.PORT || 5000, () => {
       console.log(`🚀 Server running on port ${process.env.PORT || 5000}`);
     });
